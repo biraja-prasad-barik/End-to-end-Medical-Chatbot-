@@ -5,8 +5,8 @@ from dotenv import load_dotenv
 from src.prompt import *
 import os
 
-# BADLAAV #1: OpenAI ko hata kar LlamaCpp (local model) import karo
-from langchain_community.llms import LlamaCpp
+# Import HuggingFace LLM
+from langchain_community.llms.huggingface_endpoint import HuggingFaceEndpoint
 
 # LangChain ki zaroori cheezein
 from langchain.chains import create_retrieval_chain
@@ -48,20 +48,25 @@ prompt = ChatPromptTemplate.from_messages(
     ]
 )
 
-# BADLAAV #3: Naya Local LLM (LlamaCpp) use karo
-print("Local LLM (LlamaCpp) load ho raha hai...")
-# Sunishchit karo ki aapka download kiya hua model is path par hai
-model_path = "models/mistral-7b-instruct-v0.2.Q4_K_M.gguf"
+# Use HuggingFace Endpoint instead of local model for better reliability
+print("HuggingFace LLM load ho raha hai...")
+from langchain_community.llms.huggingface_endpoint import HuggingFaceEndpoint
 
-llm = LlamaCpp(
-    model_path=model_path,
-    n_gpu_layers=-1,
-    n_batch=512,
-    n_ctx=2048,
-    f16_kv=True,
-    verbose=True,
+# Get HuggingFace token from environment
+HUGGINGFACEHUB_API_TOKEN = os.environ.get('HUGGINGFACEHUB_API_TOKEN')
+
+if not HUGGINGFACEHUB_API_TOKEN:
+    raise ValueError("HUGGINGFACEHUB_API_TOKEN not found in environment variables!")
+
+repo_id = "mistralai/Mistral-7B-Instruct-v0.2"
+
+llm = HuggingFaceEndpoint(
+    repo_id=repo_id,
+    huggingfacehub_api_token=HUGGINGFACEHUB_API_TOKEN,
+    temperature=0.7,
+    max_new_tokens=512
 )
-print("Local LLM successfully load ho gaya hai!")
+print("HuggingFace LLM successfully load ho gaya hai!")
 
 # Final RAG chain banana
 question_answer_chain = create_stuff_documents_chain(llm, prompt)
@@ -77,12 +82,23 @@ def index():
 
 @app.route("/get", methods=["GET", "POST"])
 def chat():
-    msg = request.form["msg"]
-    input = msg
-    print(f"User input: {input}")
-    response = rag_chain.invoke({"input": msg})
-    print(f"Response : {response['answer']}")
-    return str(response["answer"])
+    try:
+        msg = request.form["msg"]
+        print(f"User input: {msg}")
+        
+        if not msg.strip():
+            return "Please ask a medical question."
+        
+        # Invoke the RAG chain
+        response = rag_chain.invoke({"input": msg})
+        answer = response.get("answer", "I couldn't generate a response.")
+        
+        print(f"Response: {answer}")
+        return str(answer)
+        
+    except Exception as e:
+        print(f"Error in chat route: {str(e)}")
+        return f"Sorry, I encountered an error: {str(e)}"
 
 
 if __name__ == '__main__':

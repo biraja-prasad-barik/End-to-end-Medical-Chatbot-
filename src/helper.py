@@ -1,7 +1,7 @@
-# Sahi import statements
+# Import statements
 from langchain_community.document_loaders import PyPDFLoader, DirectoryLoader
 from langchain.text_splitter import RecursiveCharacterTextSplitter
-from langchain_community.embeddings import HuggingFaceEmbeddings # Embedding bhi community se aata hai
+from langchain_community.embeddings import HuggingFaceEmbeddings
 
 
 # Extract Data from the PDF file
