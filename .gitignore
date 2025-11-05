@@ -205,3 +205,12 @@ cython_debug/
 marimo/_static/
 marimo/_lsp/
 __marimo__/
+
+# Large model files
+models/*.gguf
+models/*.bin
+models/*.safetensors
+
+# Test files
+test_*.py
+test_*.html
