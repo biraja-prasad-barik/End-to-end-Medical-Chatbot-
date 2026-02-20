@@ -153,6 +153,15 @@ border-radius: 0 0 15px 15px !important;
 	background-color: rgb(82, 172, 255);
 	padding: 10px;
 	position: relative;
+	max-width: 80%;
+	word-wrap: break-word;
+	line-height: 1.4;
+}
+.msg_cotainer strong {
+	font-weight: bold;
+}
+.msg_cotainer em {
+	font-style: italic;
 }
 .msg_cotainer_send{
 	margin-top: auto;

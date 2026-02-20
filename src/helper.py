@@ -1,30 +1,53 @@
-# Import statements
-from langchain_community.document_loaders import PyPDFLoader, DirectoryLoader
-from langchain.text_splitter import RecursiveCharacterTextSplitter
-from langchain_community.embeddings import HuggingFaceEmbeddings
+# Helper functions for medical chatbot
 
-
-# Extract Data from the PDF file
-def load_pdf_file(data):
-    loader = DirectoryLoader(
-        data,
-        glob="*.pdf",
-        loader_cls=PyPDFLoader  # Yahan naam theek kiya
-    )
+def format_medical_response(response_text):
+    """
+    Format the medical response for better readability
+    """
+    # Add line breaks for better formatting
+    formatted_text = response_text.replace('. ', '.\n\n')
     
-    documents = loader.load()
-    return documents
+    # Add bullet points for lists
+    lines = formatted_text.split('\n')
+    formatted_lines = []
+    
+    for line in lines:
+        line = line.strip()
+        if line and not line.endswith(':'):
+            if any(keyword in line.lower() for keyword in ['symptoms:', 'causes:', 'treatment:', 'prevention:']):
+                formatted_lines.append(f"\n**{line}**")
+            else:
+                formatted_lines.append(line)
+        elif line:
+            formatted_lines.append(line)
+    
+    return '\n'.join(formatted_lines)
 
+def validate_medical_query(query):
+    """
+    Basic validation for medical queries
+    """
+    if not query or len(query.strip()) < 2:
+        return False, "Please enter a valid medical question."
+    
+    if len(query) > 500:
+        return False, "Please keep your question under 500 characters."
+    
+    return True, "Valid query"
 
-# split the data into text chunks
-def text_split(extracted_data):
-    text_splitter = RecursiveCharacterTextSplitter(chunk_size=500, chunk_overlap=20)
-    text_chunks = text_splitter.split_documents(extracted_data)
-    return text_chunks
-
-
-# download the embedding from huggingface
-def download_hugging_face_embeddings():
-    # Model ka naam string ke roop mein hona chahiye
-    embeddings = HuggingFaceEmbeddings(model_name="sentence-transformers/all-MiniLM-L6-v2")
-    return embeddings
+def extract_disease_keywords(query):
+    """
+    Extract potential disease or medical condition keywords from query
+    """
+    medical_keywords = [
+        'diabetes', 'hypertension', 'fever', 'headache', 'cough', 'cold',
+        'flu', 'asthma', 'allergy', 'acne', 'arthritis', 'migraine',
+        'pneumonia', 'bronchitis', 'sinusitis', 'gastritis', 'ulcer',
+        'depression', 'anxiety', 'insomnia', 'fatigue', 'nausea',
+        'diarrhea', 'constipation', 'heartburn', 'rash', 'eczema'
+    ]
+    
+    query_lower = query.lower()
+    found_keywords = [keyword for keyword in medical_keywords if keyword in query_lower]
+    
+    return found_keywords
